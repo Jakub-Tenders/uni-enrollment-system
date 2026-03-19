@@ -48,25 +48,39 @@ export function unwrap<T>(result: T | Error): T {
     return result
 }
 
-export type Student = {
-    id: StudentId
-    name: string
-    email: Email
-    enrolledCredits: Credits
+export class Student {
+    constructor(
+        public id: StudentId,
+        public name: string,
+        public email: Email,
+        public enrolledCredits: Credits
+    ) {
+        if (enrolledCredits > 18) throw new Error("Student exceeds max credits")
+    }
 }
 
-export type Course = {
-    code: CourseCode
-    name: string
-    credits: Credits
-    capacity: number
-    enrolledCount: number
+export class Course {
+    constructor(
+        public code: CourseCode,
+        public name: string,
+        public credits: Credits,
+        public capacity: number,
+        public enrolledCount: number
+    ) {
+        if (capacity < 1 || capacity > 200) throw new Error("Invalid Course capacity")
+        if (enrolledCount < 0 || enrolledCount > capacity) throw new Error("Invalid enrolled count")
+    }
 }
 
-export type Enrollment = {
-    id: EnrollmentId
-    studentId: StudentId
-    courseCode: CourseCode
-    semester: Semester
-    status: "active" | "cancelled"
+export class Enrollment {
+    constructor(
+        public id: EnrollmentId,
+        public studentId: StudentId,
+        public courseCode: CourseCode,
+        public semester: Semester,
+        public status: "active" | "cancelled"
+    ) {
+        if (status !== "active" && status !== "cancelled")
+            throw new Error("Invalid Enrollment status")
+    }
 }
