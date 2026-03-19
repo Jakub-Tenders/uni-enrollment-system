@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from "uuid"
-
 type Brand<K, T> = K & { __brand: T }
 
 type StudentId = Brand<string, "StudentId">
@@ -69,6 +67,3 @@ type Enrollment = {
     semester : Semester
     status: "active" | "cancelled"
 }
-
-const id = uuidv4()
-console.log("running the application ... ", id)
