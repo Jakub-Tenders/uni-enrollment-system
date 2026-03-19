@@ -1,4 +1,4 @@
-import { StudentId, CourseCode, Semester, EnrollmentId } from "./types"
+import { StudentId, CourseCode, Semester, EnrollmentId } from "./index"
 
 export type StudentEnrolledEvent = {
     studentId: StudentId
