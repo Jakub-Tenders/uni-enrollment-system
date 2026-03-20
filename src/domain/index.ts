@@ -86,15 +86,54 @@ export class Student {
 }
 
 export class Course {
-    constructor(
-        public code: CourseCode,
-        public name: string,
-        public credits: Credits,
-        public capacity: number,
-        public enrolledCount: number
-    ) {
-        if (capacity < 1 || capacity > 200) throw new Error("Invalid Course capacity")
-        if (enrolledCount < 0 || enrolledCount > capacity) throw new Error("Invalid enrolled count")
+    public readonly code: CourseCode
+    public readonly name: string
+    public readonly credits: Credits
+    public readonly capacity: number
+    private _enrolledCount: number
+
+    private constructor(code: CourseCode, name: string, credits: Credits, capacity: number) {
+        this.code = code
+        this.name = name
+        this.credits = credits
+        this.capacity = capacity
+        this._enrolledCount = 0
+    }
+
+    static create(code: CourseCode, name: string, credits: Credits, capacity: number): Course {
+        if (capacity < 1 || capacity > 200) throw new Error(`Course capacity must be between 1 and 200, got ${capacity}`)
+        if (name.trim().length === 0) throw new Error("Course name cannot be empty")
+        return new Course(code, name, credits, capacity)
+    }
+
+    get enrolledCount(): number {
+        return this._enrolledCount
+    }
+
+    get isFull(): boolean {
+        return this._enrolledCount >= this.capacity
+    }
+
+    get isNearCapacity(): boolean {
+        return this._enrolledCount / this.capacity >= 0.8
+    }
+
+    get capacityPercentage(): number {
+        return Math.round((this._enrolledCount / this.capacity) * 100)
+    }
+
+    canEnroll(): boolean {
+        return !this.isFull
+    }
+
+    addStudent(): void {
+        if (this.isFull) throw new Error(`Course ${this.code} is full`)
+        this._enrolledCount++
+    }
+
+    removeStudent(): void {
+        if (this._enrolledCount <= 0) throw new Error(`Course ${this.code} has no enrolled students`)
+        this._enrolledCount--
     }
 }
 
