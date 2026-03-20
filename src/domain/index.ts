@@ -137,15 +137,37 @@ export class Course {
     }
 }
 
+export type EnrollmentStatus = "active" | "cancelled"
+
 export class Enrollment {
-    constructor(
-        public id: EnrollmentId,
-        public studentId: StudentId,
-        public courseCode: CourseCode,
-        public semester: Semester,
-        public status: "active" | "cancelled"
-    ) {
-        if (status !== "active" && status !== "cancelled")
-            throw new Error("Invalid Enrollment status")
+    public readonly id: EnrollmentId
+    public readonly studentId: StudentId
+    public readonly courseCode: CourseCode
+    public readonly semester: Semester
+    private _status: EnrollmentStatus
+
+    private constructor(id: EnrollmentId, studentId: StudentId, courseCode: CourseCode, semester: Semester) {
+        this.id = id
+        this.studentId = studentId
+        this.courseCode = courseCode
+        this.semester = semester
+        this._status = "active"
+    }
+
+    static create(id: EnrollmentId, studentId: StudentId, courseCode: CourseCode, semester: Semester): Enrollment {
+        return new Enrollment(id, studentId, courseCode, semester)
+    }
+
+    get status(): EnrollmentStatus {
+        return this._status
+    }
+
+    get isActive(): boolean {
+        return this._status === "active"
+    }
+
+    cancel(): void {
+        if (this._status !== "active") throw new Error(`Cannot cancel enrollment ${this.id}: status is "${this._status}"`)
+        this._status = "cancelled"
     }
 }
