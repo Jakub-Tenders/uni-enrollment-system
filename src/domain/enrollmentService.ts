@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid"
-import { Student, Course, Enrollment, Semester, StudentId, CourseCode, EnrollmentId, unwrap, createEnrollmentId } from "./index"
+import { Student, Course, Enrollment, Semester, unwrap, createEnrollmentId } from "./index"
 import { domainEvents } from "../infrastructure/domainEvents"
 
 export function enroll(student: Student, course: Course, semester: Semester, existing: Enrollment[]): Enrollment | Error {
