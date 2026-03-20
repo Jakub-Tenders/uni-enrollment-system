@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid"
-import { Student, Course, Enrollment, Credits, Semester, unwrap, createEnrollmentId } from "./index"
+import { Student, Course, Enrollment, Semester, unwrap, createEnrollmentId } from "./index"
 import { domainEvents } from "../infrastructure/domainEvents"
 
 export function enroll(student: Student, course: Course, semester: Semester, existing: Enrollment[]): Enrollment | Error {
@@ -7,19 +7,24 @@ export function enroll(student: Student, course: Course, semester: Semester, exi
         e.studentId === student.id &&
         e.courseCode === course.code &&
         e.semester === semester &&
-        e.status === "active"
+        e.isActive
     )
     if (duplicate) return new Error("Student is already enrolled in this course for this semester")
 
-    if (course.enrolledCount >= course.capacity) return new Error("Course is full")
+    if (!course.canEnroll()) return new Error("Course is full")
 
-    if (student.enrolledCredits + course.credits > 18) return new Error("Student would exceed the 18 credit limit")
+    if (!student.canEnroll(semester, course.credits)) {
+        return new Error(
+            `Student would exceed 18 credits for ${semester} ` +
+            `(currently ${student.getCreditsForSemester(semester)}, course adds ${course.credits})`
+        )
+    }
 
     const enrollmentId = unwrap(createEnrollmentId("ENR" + uuidv4()))
-    const enrollment = new Enrollment(enrollmentId, student.id, course.code, semester, "active")
+    const enrollment = Enrollment.create(enrollmentId, student.id, course.code, semester)
 
-    course.enrolledCount++
-    student.enrolledCredits = (student.enrolledCredits + course.credits) as Credits
+    course.addStudent()
+    student.addCredits(semester, course.credits)
 
     domainEvents.emit("StudentEnrolled", {
         studentId: student.id,
@@ -28,15 +33,14 @@ export function enroll(student: Student, course: Course, semester: Semester, exi
         enrollmentId
     })
 
-    const fill = course.enrolledCount / course.capacity
-    if (fill >= 1) {
+    if (course.isFull) {
         domainEvents.emit("CourseFull", {
             courseCode: course.code,
             semester,
             capacity: course.capacity,
             enrolledCount: course.enrolledCount
         })
-    } else if (fill >= 0.8) {
+    } else if (course.isNearCapacity) {
         domainEvents.emit("CourseCapacityReached", {
             courseCode: course.code,
             semester,
@@ -49,11 +53,11 @@ export function enroll(student: Student, course: Course, semester: Semester, exi
 }
 
 export function cancelEnrollment(enrollment: Enrollment, student: Student, course: Course): void | Error {
-    if (enrollment.status !== "active") return new Error("Can only cancel an active enrollment")
+    if (!enrollment.isActive) return new Error("Can only cancel an active enrollment")
 
-    enrollment.status = "cancelled"
-    course.enrolledCount--
-    student.enrolledCredits = (student.enrolledCredits - course.credits) as Credits
+    enrollment.cancel()
+    course.removeStudent()
+    student.removeCredits(enrollment.semester, course.credits)
 
     domainEvents.emit("EnrollmentCancelled", {
         enrollmentId: enrollment.id,
