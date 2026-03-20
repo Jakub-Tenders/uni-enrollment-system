@@ -49,13 +49,39 @@ export function unwrap<T>(result: T | Error): T {
 }
 
 export class Student {
-    constructor(
-        public id: StudentId,
-        public name: string,
-        public email: Email,
-        public enrolledCredits: Credits
-    ) {
-        if (enrolledCredits > 18) throw new Error("Student exceeds max credits")
+    public readonly id: StudentId
+    public readonly name: string
+    public readonly email: Email
+    private creditsBySemester: Map<string, number>
+
+    private constructor(id: StudentId, name: string, email: Email) {
+        this.id = id
+        this.name = name
+        this.email = email
+        this.creditsBySemester = new Map()
+    }
+
+    static create(id: StudentId, name: string, email: Email): Student {
+        if (name.trim().length === 0) throw new Error("Student name cannot be empty")
+        return new Student(id, name, email)
+    }
+
+    getCreditsForSemester(semester: Semester): number {
+        return this.creditsBySemester.get(semester) ?? 0
+    }
+
+    canEnroll(semester: Semester, additionalCredits: Credits): boolean {
+        return this.getCreditsForSemester(semester) + additionalCredits <= 18
+    }
+
+    addCredits(semester: Semester, credits: Credits): void {
+        const current = this.getCreditsForSemester(semester)
+        this.creditsBySemester.set(semester, current + credits)
+    }
+
+    removeCredits(semester: Semester, credits: Credits): void {
+        const current = this.getCreditsForSemester(semester)
+        this.creditsBySemester.set(semester, Math.max(0, current - credits))
     }
 }
 
